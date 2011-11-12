@@ -4,8 +4,6 @@ import qualified Data.List as List
 import qualified Geometry.Sphere as Sphere
 import qualified Geometry.Cuboid as Cuboid
 import qualified Geometry.Cube as Cube
-import qualified Data.ByteString.Lazy as B
-import qualified Data.ByteString as S
 import Shapes
 import System.Random
 
@@ -251,20 +249,20 @@ infix 5 .++
 Empty .++ ys = ys
 (x :-: xs) .++ ys = x :-: (xs .++ ys)
 
-data Tree a = EmptyTree | Node a (Tree a) (Tree a) deriving (Show, Read, Eq)
+data Tree a = EmptyTree | TreeNode a (Tree a) (Tree a) deriving (Show, Read, Eq)
 
 singleton :: a -> Tree a
-singleton x = Node x EmptyTree EmptyTree
+singleton x = TreeNode x EmptyTree EmptyTree
 treeInsert :: (Ord a) => a -> Tree a -> Tree a
 treeInsert x EmptyTree = singleton x
-treeInsert x (Node a left right)
-    | x == a = Node x left right
-    | x < a = Node a (treeInsert x left) right
-    | x > a = Node a left (treeInsert x right)
+treeInsert x (TreeNode a left right)
+    | x == a = TreeNode x left right
+    | x < a = TreeNode a (treeInsert x left) right
+    | x > a = TreeNode a left (treeInsert x right)
 
 treeElem :: (Ord a) => a -> Tree a -> Bool
 treeElem x EmptyTree = False
-treeElem x (Node a left right)
+treeElem x (TreeNode a left right)
     | x == a = True
     | x < a = treeElem x left
     | x > a = treeElem x right
@@ -321,7 +319,7 @@ yesnoIf yesnoVal yesResult noResult = if yesno yesnoVal then yesResult else noRe
 
 instance Functor Tree where
     fmap f EmptyTree = EmptyTree
-    fmap f (Node x leftsub rightsub) = Node (f x) (fmap f leftsub) (fmap f rightsub)
+    fmap f (TreeNode x leftsub rightsub) = TreeNode (f x) (fmap f leftsub) (fmap f rightsub)
 
 class Tofu t where
     tofu :: j a -> t a j
@@ -352,3 +350,14 @@ finiteRandoms n gen =
     let (value, newGen) = random gen
         (restOfList, finalGen) = finiteRandoms (n - 1) newGen
     in (value:restOfList, finalGen)
+
+solveRPN :: String -> Float
+solveRPN = head . foldl foldingFunction [] . words
+    where   foldingFunction (x:y:ys) "*" = (x * y):ys
+            foldingFunction (x:y:ys) "+" = (x + y):ys
+            foldingFunction (x:y:ys) "-" = (y - x):ys
+            foldingFunction (x:y:ys) "/" = (y / x):ys
+            foldingFunction (x:y:ys) "^" = (y ** x):ys
+            foldingFunction (x:ys) "ln" = log x:ys
+            foldingFunction xs "sum" = [sum xs]
+            foldingFunction xs numberString = read numberString:xs
