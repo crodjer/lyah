@@ -4,7 +4,10 @@ import qualified Data.List as List
 import qualified Geometry.Sphere as Sphere
 import qualified Geometry.Cuboid as Cuboid
 import qualified Geometry.Cube as Cube
+import qualified Data.ByteString.Lazy as B
+import qualified Data.ByteString as S
 import Shapes
+import System.Random
 
 doubleMe x = x * 2
 doubleUs x y = doubleMe (x + y)
@@ -332,3 +335,20 @@ data Barry t k p = Barry { yabba :: p, dabba :: t k } deriving (Show)
 
 instance Functor (Barry a b) where
     fmap f (Barry {yabba = x, dabba = y}) = Barry {yabba = f x, dabba = y}
+
+threeCoins :: StdGen -> (Bool, Bool, Bool)
+threeCoins gen =
+    let (firstCoin, newGen) = random gen
+        (secondCoin, newGen') = random newGen
+        (thirdCoin, newGen'') = random newGen'
+    in (firstCoin, secondCoin, thirdCoin)
+
+randoms' :: (RandomGen g, Random a) => g -> [a]
+randoms' gen = let (value, newGen) = random gen in value:randoms newGen
+
+finiteRandoms :: (RandomGen g, Random a, Num n) => n -> g -> ([a], g)
+finiteRandoms 0 gen = ([], gen)
+finiteRandoms n gen =
+    let (value, newGen) = random gen
+        (restOfList, finalGen) = finiteRandoms (n - 1) newGen
+    in (value:restOfList, finalGen)
