@@ -1,1 +1,7 @@
-Practiced code from [Learn You a Haskell for Great Good](http://learnyouahaskell.com).
+Code from [Learn You a Haskell for Great Good](http://learnyouahaskell.com)
+written while reading it.
+
+The Book:  
+*Learn you a Haskell for Great Good* is a really good resource to begin
+learning the language. It helps developing a functional attitude, explains
+the concepts really well.
