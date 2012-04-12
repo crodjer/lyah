@@ -1,23 +1,31 @@
+module Baby where
+
 import qualified Data.Map as Map
-import qualified Data.Set as Set
-import qualified Data.List as List
-import qualified Geometry.Sphere as Sphere
-import qualified Geometry.Cuboid as Cuboid
-import qualified Geometry.Cube as Cube
-import Shapes
 import System.Random
 
+
+doubleMe :: Num a => a -> a
 doubleMe x = x * 2
+doubleUs :: (Num a) => a -> a -> a
 doubleUs x y = doubleMe (x + y)
+
+doubleSmallNumber :: Int -> Int
 doubleSmallNumber x = if x > 100
                         then x
                         else x*2
+
+doubleSmallNumber' :: Int -> Int
 doubleSmallNumber' x = (if x > 100 then x else x*2) + 1
+
+
+boomBangs :: [Int] -> [String]
 boomBangs xs = [ if x < 10 then "BOOM!" else "BANG!" | x <- xs, odd x ]
 
+lucky :: Int -> String
 lucky 7 = "Lucky No. Seven!"
-lucky x = "Sorry, you're out of luck, pal!"
+lucky _ = "Sorry, you're out of luck, pal!"
 
+factorial :: Int -> Int
 factorial 0 = 1
 factorial n = n * factorial(n-1)
 
@@ -33,7 +41,7 @@ length' (_:xs) = 1 + length' xs
 
 capital :: String -> String
 capital "" = "Empty string, whoops!"
-capital all@(x:xs) = "The first letter of " ++ all ++ " is " ++ [x]
+capital string@(x:_) = "The first letter of " ++ string ++ " is " ++ [x]
 
 bmiTell :: (RealFloat a) => a -> a -> String
 bmiTell weight height
@@ -41,20 +49,15 @@ bmiTell weight height
     | bmi <= normal = "You're supposedly normal. Pfft, I bet you're ugly!"
     | bmi <= fat = "You're a fat! Lose some weight, fatty!"
     | otherwise                   = "You're a whale, congratulations!"
-    where bmi = weight / height ^ 2
+    where bmi = weight / (height * height)
           (skinny, normal, fat) = (18.5, 25.0, 30.0)
 
 initials :: String -> String -> String
 initials (f:_) (l:_) = [f] ++ "." ++ [l] ++ "."
+initials _ _ = ""
 
 calcBmis :: (RealFloat a) => [(a,a)] -> [a]
-calcBmis xs = [bmi | (w, h) <- xs, let bmi = w / h ^ 2]
-
-cylinder :: (RealFloat a) => a -> a -> a
-cylinder r h =
-    let sideArea = 2 * pi * r * h
-        topArea = pi * r ^2
-    in sideArea + 2 * topArea
+calcBmis xs = [bmi | (w, h) <- xs, let bmi = w / (h * h)]
 
 head' :: [a] -> a
 head' xs = case xs of [] -> error "No head for empty lists!"
@@ -93,22 +96,20 @@ chain 1 = [1]
 chain n
     | even n = n:chain (n `div` 2)
     | odd n = n:chain (n*3 + 1)
+chain _ = [0]
 
 numLongChains :: Int
-{-
- -numLongChains = length (filter isLong (map chain [1..100]))
- -    where isLong xs = length xs > 15
- -}
-numLongChains = length (filter (\xs -> length xs > 15) (map chain [1..100]))
+numLongChains = length (filter (\xs -> length xs > 15) (map chain [1::Int ..100]))
 
 sum' :: (Num a) => [a] -> a
-sum' = foldl (+) 0
+sum' = sum
+{-sum' = foldl (+) 0-}
 
 elem' :: (Eq a) => a -> [a] -> Bool
-elem' y ys = foldl (\acc x -> if x == y then True else acc) False ys
+elem' y = foldl (\acc x -> (x == y) || acc) False
 
 map' :: (a -> b) -> [a] -> [b]
-map' f xs = foldr (\x acc -> f x :acc) [] xs
+map' f = foldr (\x acc -> f x :acc) []
 
 {-
  -phoneBook =
@@ -127,6 +128,8 @@ findKey' key = foldr (\(k,v) acc -> if key == k then Just v else acc) Nothing
 formList' :: (Ord k) => [(k,v)] -> Map.Map k v
 formList' = foldr (\(k,v) acc -> Map.insert k v acc) Map.empty
 
+
+phoneBookMult :: [(String, String)]
 phoneBookMult =
     [("betty","555-2938")
     ,("patsy","943-2929")
@@ -142,13 +145,6 @@ phoneBookMult =
 
 phoneBookToMap :: (Ord k) => [(k, a)] -> Map.Map k [a]
 phoneBookToMap xs = Map.fromListWith (++) $ map (\(k,v) -> (k,[v])) xs
-
-text1 = "I just had an anime dream. Anime... Reality... Are they so different?"
-text2 = "The old man left his garbage can out and now his trash is all over my lawn!"
-
-l1 = [2,3,7]
-l2 = [3,5,7,2,6,0]
-l3 = 7:0:l2
 
 {-
  -data Person = Person String String Int Float String String deriving (Show)
@@ -231,8 +227,8 @@ lockers = Map.fromList
     ]
 
 lockerLookup :: Int -> LockerMap -> Either String Code
-lockerLookup lockerNumber map =
-    case Map.lookup lockerNumber map of
+lockerLookup lockerNumber m =
+    case Map.lookup lockerNumber m of
         Nothing -> Left $ "Locker number " ++ show lockerNumber ++ " does't exist!"
         Just (state, code) -> if state /= Taken
                                 then Right code
@@ -259,13 +255,15 @@ treeInsert x (TreeNode a left right)
     | x == a = TreeNode x left right
     | x < a = TreeNode a (treeInsert x left) right
     | x > a = TreeNode a left (treeInsert x right)
+treeInsert _ _ = EmptyTree
 
 treeElem :: (Ord a) => a -> Tree a -> Bool
-treeElem x EmptyTree = False
+treeElem _ EmptyTree = False
 treeElem x (TreeNode a left right)
     | x == a = True
     | x < a = treeElem x left
     | x > a = treeElem x right
+treeElem _ _ = False
 
 {-
  -class Eq a where
@@ -318,7 +316,7 @@ yesnoIf :: (YesNo y) => y -> a -> a -> a
 yesnoIf yesnoVal yesResult noResult = if yesno yesnoVal then yesResult else noResult
 
 instance Functor Tree where
-    fmap f EmptyTree = EmptyTree
+    fmap _ EmptyTree = EmptyTree
     fmap f (TreeNode x leftsub rightsub) = TreeNode (f x) (fmap f leftsub) (fmap f rightsub)
 
 class Tofu t where
@@ -327,7 +325,7 @@ class Tofu t where
 data Frank a b = Frank {frankField :: b a} deriving (Show)
 
 instance Tofu Frank where
-    tofu x = Frank x
+    tofu = Frank
 
 data Barry t k p = Barry { yabba :: p, dabba :: t k } deriving (Show)
 
@@ -338,13 +336,13 @@ threeCoins :: StdGen -> (Bool, Bool, Bool)
 threeCoins gen =
     let (firstCoin, newGen) = random gen
         (secondCoin, newGen') = random newGen
-        (thirdCoin, newGen'') = random newGen'
+        (thirdCoin, _) = random newGen'
     in (firstCoin, secondCoin, thirdCoin)
 
 randoms' :: (RandomGen g, Random a) => g -> [a]
 randoms' gen = let (value, newGen) = random gen in value:randoms newGen
 
-finiteRandoms :: (RandomGen g, Random a, Num n) => n -> g -> ([a], g)
+finiteRandoms :: (RandomGen g, Random a, Num n, Eq n) => n -> g -> ([a], g)
 finiteRandoms 0 gen = ([], gen)
 finiteRandoms n gen =
     let (value, newGen) = random gen
@@ -361,3 +359,10 @@ solveRPN = head . foldl foldingFunction [] . words
             foldingFunction (x:ys) "ln" = log x:ys
             foldingFunction xs "sum" = [sum xs]
             foldingFunction xs numberString = read numberString:xs
+
+--Counter Maybe. Not a functor
+data CMaybe a = CNothing | CJust Int a deriving (Show)
+
+instance Functor CMaybe where
+    fmap _ CNothing = CNothing
+    fmap f (CJust counter x) = CJust (counter+1) (f x)
