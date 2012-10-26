@@ -7,6 +7,7 @@ import System.Random
 import Control.Arrow (first, second)
 import GHC.Float
 import Control.Monad
+import Control.Applicative
 
 doubleMe :: Num a => a -> a
 doubleMe x = x * 2
@@ -450,3 +451,12 @@ maybeAnd _ _ = Nothing
 
 maybeAndFold boolList = foldM maybeAnd True boolList
 -------------------------
+
+newtype ZipList' a = ZipList' [a] deriving Show
+
+instance Functor ZipList' where
+  fmap f (ZipList' xs) = ZipList' (map f xs)
+
+instance Applicative ZipList' where
+  (ZipList' fs) <*> (ZipList' xs) = ZipList' $ zipWith ($) fs xs
+  pure x = ZipList' (repeat x)
