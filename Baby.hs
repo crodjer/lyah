@@ -1,8 +1,12 @@
 module Baby where
 
+import Data.Monoid
+import Data.Ratio
 import qualified Data.Map as Map
 import System.Random
-
+import Control.Arrow (first, second)
+import GHC.Float
+import Control.Monad
 
 doubleMe :: Num a => a -> a
 doubleMe x = x * 2
@@ -43,13 +47,14 @@ capital :: String -> String
 capital "" = "Empty string, whoops!"
 capital string@(x:_) = "The first letter of " ++ string ++ " is " ++ [x]
 
-bmiTell :: (RealFloat a) => a -> a -> String
+bmiTell :: (RealFloat a, Show a) => a -> a -> String
 bmiTell weight height
-    | bmi <= skinny = "You're underweight, you emo, you!"
-    | bmi <= normal = "You're supposedly normal. Pfft, I bet you're ugly!"
-    | bmi <= fat = "You're a fat! Lose some weight, fatty!"
-    | otherwise                   = "You're a whale, congratulations!"
+    | bmi <= skinny = "You're underweight, you emo, you!" ++ bmiStr
+    | bmi <= normal = "You're supposedly normal. Pfft, I bet you're ugly!" ++ bmiStr
+    | bmi <= fat    = "You're a fat! Lose some weight, fatty!" ++ bmiStr
+    | otherwise     = "You're a whale, congratulations!" ++ bmiStr
     where bmi = weight / (height * height)
+          bmiStr = " Bmi: " ++ show bmi
           (skinny, normal, fat) = (18.5, 25.0, 30.0)
 
 initials :: String -> String -> String
@@ -72,12 +77,13 @@ zip' [] _ = []
 zip' (x:xs) (y:ys) = (x,y):zip' xs ys
 
 {-
- -elem' :: (Eq a) => a -> [a] -> Bool
- -elem' a [] = False
- -elem' a(x:xs)
- -    | a == x    = True
- -    | otherwise = a `elem'` xs
- -}
+elem' :: (Eq a) => a -> [a] -> Bool
+elem' a [] = False
+elem' a(x:xs)
+    | a == x    = True
+    | otherwise = a `elem'` xs
+
+-}
 
 quicksort :: (Ord a) => [a] -> [a]
 quicksort [] = []
@@ -111,16 +117,16 @@ elem' y = foldl (\acc x -> (x == y) || acc) False
 map' :: (a -> b) -> [a] -> [b]
 map' f = foldr (\x acc -> f x :acc) []
 
-{-
- -phoneBook =
- -    [("betty","555-2938")
- -    ,("bonnie","452-2928")
- -    ,("patsy","493-2928")
- -    ,("lucille","205-2928")
- -    ,("wendy","939-8282")
- -    ,("penny","853-2492")
- -    ]
- -}
+
+phoneBook :: [(String,String)]
+phoneBook =
+    [("betty","555-2938")
+    ,("bonnie","452-2928")
+    ,("patsy","493-2928")
+    ,("lucille","205-2928")
+    ,("wendy","939-8282")
+    ,("penny","853-2492")
+    ]
 
 findKey' :: (Eq k) => k -> [(k,v)] -> Maybe v
 findKey' key = foldr (\(k,v) acc -> if key == k then Just v else acc) Nothing
@@ -192,16 +198,6 @@ scalarMult :: (Num t) => Vector t -> Vector t -> t
 data Day = Monday | Tuesday | Wednesday | Thursday | Friday | Saturday | Sunday
            deriving (Eq, Ord, Show, Read, Bounded, Enum)
 
-phoneBook :: [(String,String)]
-phoneBook =
-    [("betty","555-2938")
-    ,("bonnie","452-2928")
-    ,("patsy","493-2928")
-    ,("lucille","205-2928")
-    ,("wendy","939-8282")
-    ,("penny","853-2492")
-    ]
-
 type PhoneNumber = String
 type Name = String
 type PhoneBook = [(Name, PhoneNumber)]
@@ -234,44 +230,42 @@ lockerLookup lockerNumber m =
                                 then Right code
                                 else Left $ "Locker number " ++ show lockerNumber ++ " is already taken!"
 
-{-
- -data List a = Empty | Cons {listHEAD :: a, listTail :: List a} deriving (Show, Read, Eq, Ord)
- -}
-infixr 5 :-:
-data List a = Empty | a :-: (List a) deriving (Show, Read, Eq, Ord)
+-- data List a = Empty | Cons {listHEAD :: a, listTail :: List a} deriving (Show, Read, Eq, Ord)
+-- infixr 5 :-:
+-- data List a = Empty | a :-: (List a) deriving (Show, Read, Eq, Ord)
 
-infix 5 .++
-(.++) :: List a -> List a -> List a
-Empty .++ ys = ys
-(x :-: xs) .++ ys = x :-: (xs .++ ys)
+--infix 5 .++
+--(.++) :: List a -> List a -> List a
+--Empty .++ ys = ys
+--(x :-: xs) .++ ys = x :-: (xs .++ ys)
 
-data Tree a = EmptyTree | TreeNode a (Tree a) (Tree a) deriving (Show, Read, Eq)
+data Tree a = Empty | Node a (Tree a) (Tree a) deriving (Show, Read, Eq)
 
 singleton :: a -> Tree a
-singleton x = TreeNode x EmptyTree EmptyTree
+singleton x = Node x Empty Empty
 treeInsert :: (Ord a) => a -> Tree a -> Tree a
-treeInsert x EmptyTree = singleton x
-treeInsert x (TreeNode a left right)
-    | x == a = TreeNode x left right
-    | x < a = TreeNode a (treeInsert x left) right
-    | x > a = TreeNode a left (treeInsert x right)
-treeInsert _ _ = EmptyTree
+treeInsert x Empty = singleton x
+treeInsert x (Node a left right)
+    | x == a = Node x left right
+    | x < a = Node a (treeInsert x left) right
+    | x > a = Node a left (treeInsert x right)
+treeInsert _ _ = Empty
 
 treeElem :: (Ord a) => a -> Tree a -> Bool
-treeElem _ EmptyTree = False
-treeElem x (TreeNode a left right)
+treeElem _ Empty = False
+treeElem x (Node a left right)
     | x == a = True
     | x < a = treeElem x left
     | x > a = treeElem x right
 treeElem _ _ = False
 
 {-
- -class Eq a where
- -    (==) :: a -> a -> Bool
- -    (/=) :: a -> a -> Bool
- -    x == y = not (x /= y)
- -    x /= y = not (x == y)
- -}
+class Eq a where
+  (==) :: a -> a -> Bool
+  (/=) :: a -> a -> Bool
+  x == y = not (x /= y)
+  x /= y = not (x == y)
+-}
 
 data TrafficLight = Red | Yellow | Green
 
@@ -305,7 +299,7 @@ instance YesNo (Maybe a) where
     yesno Nothing = False
 
 instance YesNo (Tree a) where
-    yesno EmptyTree = False
+    yesno Empty = False
     yesno _ = True
 
 instance YesNo TrafficLight where
@@ -316,8 +310,8 @@ yesnoIf :: (YesNo y) => y -> a -> a -> a
 yesnoIf yesnoVal yesResult noResult = if yesno yesnoVal then yesResult else noResult
 
 instance Functor Tree where
-    fmap _ EmptyTree = EmptyTree
-    fmap f (TreeNode x leftsub rightsub) = TreeNode (f x) (fmap f leftsub) (fmap f rightsub)
+    fmap _ Empty = Empty
+    fmap f (Node x leftsub rightsub) = Node (f x) (fmap f leftsub) (fmap f rightsub)
 
 class Tofu t where
     tofu :: j a -> t a j
@@ -366,3 +360,93 @@ data CMaybe a = CNothing | CJust Int a deriving (Show)
 instance Functor CMaybe where
     fmap _ CNothing = CNothing
     fmap f (CJust counter x) = CJust (counter+1) (f x)
+
+newtype Prob a = Prob {getProb :: [(a, Rational)]} deriving Show
+
+instance Functor Prob where
+    fmap f (Prob xs) = Prob $ map (first f) xs
+
+flatten :: Prob (Prob a) -> Prob a  
+flatten (Prob xs) = Prob $ concatMap multAll xs
+    where multAll (Prob innerxs,p) = map (second (p * )) innerxs
+
+instance Monad Prob where
+    return x = Prob [(x, 1%1)]
+    m >>=f = flatten (fmap f m)
+    fail _ = Prob []
+
+data Coin = Heads | Tails deriving (Show, Eq)
+
+coin :: Prob Coin
+coin = Prob [(Heads, 1%2), (Tails, 1%2)]
+
+loadedCoin :: Prob Coin
+loadedCoin = Prob [(Heads, 1%10), (Tails, 9%10)]
+
+freeTree :: Tree Char
+freeTree =
+    Node 'P'
+        (Node 'O'
+            (Node 'L'
+                (Node 'N' Empty Empty)
+                (Node 'T' Empty Empty)
+            )
+            (Node 'W'
+                (Node 'S' Empty Empty)
+                (Node 'A' Empty Empty)
+            )
+        )
+        (Node 'L'
+            (Node 'W'
+                (Node 'C' Empty Empty)
+                (Node 'R' Empty Empty)
+            )
+            (Node 'A'
+                (Node 'A' Empty Empty)
+                (Node 'C' Empty Empty)
+            )
+        )
+
+data Direction = L | R deriving (Show)
+type Directions = [Direction]
+
+changeToElem :: Directions -> Tree a -> a -> Tree a
+changeToElem (L:ds) (Node x l r) e = Node x (changeToElem ds l e) r
+changeToElem (R:ds) (Node x l r) e = Node x l (changeToElem ds r e)
+changeToElem [](Node _ l r) e = Node e l r
+changeToElem _ x _ = x
+
+changeToP :: Directions -> Tree Char -> Tree Char
+changeToP ds t = changeToElem ds t 'P'
+
+elemAt :: (Monoid a) => Directions -> Tree a -> a
+elemAt (L:ds) (Node _ l _) = elemAt ds l
+elemAt (R:ds) (Node _ _ r) = elemAt ds r
+elemAt [] (Node x _ _) = x
+elemAt _ Empty = mempty
+
+toList:: a -> [a]
+toList x = [x]
+
+type Breadcrumbs = [Direction]
+
+goLeft :: (Tree a, Breadcrumbs) -> (Tree a, Breadcrumbs)
+goLeft (Node _ l _, bs) = (l , L:bs)
+goLeft (Empty, bs) = (Empty, bs)
+
+goRight :: (Tree a, Breadcrumbs) -> (Tree a, Breadcrumbs)
+goRight (Node _ _ r, bs) = (r, R:bs)
+goRight (Empty, bs) = (Empty, bs)
+
+data Crumb a = LeftCrumb a (Tree a) | RightCrumb a (Tree a) deriving (Show)
+
+-------------------------
+-- Folding over monads --
+-------------------------
+
+maybeAnd :: Bool -> Bool -> Maybe Bool
+maybeAnd True True = Just True 
+maybeAnd _ _ = Nothing
+
+maybeAndFold boolList = foldM maybeAnd True boolList
+-------------------------
