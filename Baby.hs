@@ -5,9 +5,11 @@ import Data.Ratio
 import qualified Data.Map as Map
 import System.Random
 import Control.Arrow (first, second)
-import GHC.Float
+import GHC.Float()
 import Control.Monad
 import Control.Applicative
+import Control.Monad.Error()
+import Control.Monad.State
 
 doubleMe :: Num a => a -> a
 doubleMe x = x * 2
@@ -362,7 +364,7 @@ instance Functor CMaybe where
     fmap _ CNothing = CNothing
     fmap f (CJust counter x) = CJust (counter+1) (f x)
 
-newtype Prob a = Prob {getProb :: [(a, Rational)]} deriving Show
+newtype Prob a = Prob [(a, Rational)] deriving Show
 
 instance Functor Prob where
     fmap f (Prob xs) = Prob $ map (first f) xs
@@ -383,6 +385,19 @@ coin = Prob [(Heads, 1%2), (Tails, 1%2)]
 
 loadedCoin :: Prob Coin
 loadedCoin = Prob [(Heads, 1%10), (Tails, 9%10)]
+
+thisSituation :: Prob (Prob Char)  
+thisSituation = Prob  
+    [( Prob [('a',1%2),('b',1%2)] , 1%4 )  
+    ,( Prob [('c',1%2),('d',1%2)] , 3%4)  
+    ]
+
+flipThree :: Prob Bool
+flipThree = do
+  a <- coin
+  b <- coin
+  c <- loadedCoin
+  return $ all (== Tails) [a,b,c]
 
 freeTree :: Tree Char
 freeTree =
@@ -449,6 +464,7 @@ maybeAnd :: Bool -> Bool -> Maybe Bool
 maybeAnd True True = Just True 
 maybeAnd _ _ = Nothing
 
+maybeAndFold :: [Bool] -> Maybe Bool
 maybeAndFold boolList = foldM maybeAnd True boolList
 -------------------------
 
@@ -460,3 +476,45 @@ instance Functor ZipList' where
 instance Applicative ZipList' where
   (ZipList' fs) <*> (ZipList' xs) = ZipList' $ zipWith ($) fs xs
   pure x = ZipList' (repeat x)
+
+maybeSum :: Num a => a -> a -> Maybe a
+a `maybeSum` b = Just (a + b)
+
+type Move = (Int, Int)
+type KnightPos = Move
+
+knightMoves :: [Move]
+knightMoves = do
+  base <- [1, -1]
+  (cm, rm) <- [(base, base), (base, -base)]
+  [(cm*2, rm), (cm, rm*2)]
+
+moveKnight :: KnightPos -> [KnightPos]
+moveKnight (c, r) = do
+  (cm, rm) <- knightMoves
+  (c', r') <- [(c + cm, r + rm)]
+  guard (c' `elem` [1..8] && r' `elem` [1..8])
+  return (c', r')
+
+inThree :: KnightPos -> [KnightPos]
+inThree start = return start >>= moveKnight >>= moveKnight >>= moveKnight
+
+canReachInThree :: KnightPos -> KnightPos -> Bool
+canReachInThree start end = end `elem` inThree start
+
+type Stack = [Int]
+
+pop :: State Stack Int  
+pop = state $ \(x:xs) -> (x,xs)  
+  
+push :: Int -> State Stack ()  
+push a = state $ \xs -> ((),a:xs)  
+
+stackManip :: State Stack Int
+stackManip = do
+  push 3
+  pop
+  pop
+
+powerset :: [a] -> [[a]]
+powerset = filterM (\_ -> [True, False])
