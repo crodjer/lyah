@@ -518,3 +518,14 @@ stackManip = do
 
 powerset :: [a] -> [[a]]
 powerset = filterM (\_ -> [True, False])
+
+randomSt :: (RandomGen g, Random a) => State g a
+randomSt = state random
+
+newtype Queue a = Queue [a]
+
+enQ :: a -> State (Queue a) ()
+enQ e = state $ \(Queue xs) -> ((), Queue (xs ++ [e]))
+
+deQ :: State (Queue a) a
+deQ = state $ \(Queue (x:xs)) -> (x, Queue xs)
