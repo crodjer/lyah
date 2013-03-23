@@ -32,7 +32,7 @@ lucky :: Int -> String
 lucky 7 = "Lucky No. Seven!"
 lucky _ = "Sorry, you're out of luck, pal!"
 
-factorial :: Int -> Int
+-- factorial :: Int -> Int
 factorial 0 = 1
 factorial n = n * factorial(n-1)
 
@@ -237,10 +237,10 @@ lockerLookup lockerNumber m =
 -- infixr 5 :-:
 -- data List a = Empty | a :-: (List a) deriving (Show, Read, Eq, Ord)
 
---infix 5 .++
---(.++) :: List a -> List a -> List a
---Empty .++ ys = ys
---(x :-: xs) .++ ys = x :-: (xs .++ ys)
+-- infix 5 .++
+-- (.++) :: List a -> List a -> List a
+-- Empty .++ ys = ys
+-- (x :-: xs) .++ ys = x :-: (xs .++ ys)
 
 data Tree a = Empty | Node a (Tree a) (Tree a) deriving (Show, Read, Eq)
 
@@ -529,3 +529,24 @@ enQ e = state $ \(Queue xs) -> ((), Queue (xs ++ [e]))
 
 deQ :: State (Queue a) a
 deQ = state $ \(Queue (x:xs)) -> (x, Queue xs)
+
+slice :: Int -> Int -> [a] -> [a]
+slice start end = (drop start).(take end)
+
+isPalindrome :: Eq a => [a] -> Bool
+isPalindrome [] = True
+isPalindrome (_:[]) = True
+isPalindrome (x:xs)
+  | sameEnds = isPalindrome(subArray)
+  | otherwise = False
+  where subArray = take (length xs - 1) $ xs
+        sameEnds = x == last(xs)
+
+numIsPalindrome :: Integer -> Bool
+numIsPalindrome = isPalindrome.show.abs
+
+prevPalindrome :: Integer -> Integer
+prevPalindrome num
+  | numIsPalindrome(prevNumber) = prevNumber
+  | otherwise = prevPalindrome(prevNumber)
+  where prevNumber = num - 1
