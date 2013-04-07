@@ -504,11 +504,11 @@ canReachInThree start end = end `elem` inThree start
 
 type Stack = [Int]
 
-pop :: State Stack Int  
-pop = state $ \(x:xs) -> (x,xs)  
-  
-push :: Int -> State Stack ()  
-push a = state $ \xs -> ((),a:xs)  
+pop :: State Stack Int
+pop = state $ \(x:xs) -> (x,xs)
+
+push :: Int -> State Stack ()
+push a = state $ \xs -> ((),a:xs)
 
 stackManip :: State Stack Int
 stackManip = do
