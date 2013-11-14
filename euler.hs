@@ -99,7 +99,7 @@ problem7 = primes !! 10000
 
 -- Problem 8
 chrToInt :: Char -> Int
-chrToInt c = read [c] :: Int
+chrToInt c = read [c]
 
 -- From tail function
 consecutives :: [a] -> Int -> [[a]]
