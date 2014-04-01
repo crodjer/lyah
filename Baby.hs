@@ -3,13 +3,15 @@ module Baby where
 import Data.Monoid
 import Data.Ratio
 import qualified Data.Map as Map
+import qualified Data.Foldable as F
 import System.Random
 import Control.Arrow (first, second)
 import GHC.Float()
 import Control.Monad
 import Control.Applicative
 import Control.Monad.Error()
-import Control.Monad.State
+import Control.Monad.Trans.State
+import Control.Monad.Writer
 
 doubleMe :: Num a => a -> a
 doubleMe x = x * 2
@@ -36,11 +38,11 @@ lucky _ = "Sorry, you're out of luck, pal!"
 factorial 0 = 1
 factorial n = n * factorial(n-1)
 
-tell :: (Show a) => [a] -> String
-tell [] = "The list is empty"
-tell (x:[]) = "The list has one element: " ++ show x
-tell (x:y:[]) = "The list has two elements: " ++ show x ++ " and " ++ show y
-tell (x:y:_) = "This list is long. The first two elements are: " ++ show x ++ " and " ++ show y
+tell' :: (Show a) => [a] -> String
+tell' [] = "The list is empty"
+tell' (x:[]) = "The list has one element: " ++ show x
+tell' (x:y:[]) = "The list has two elements: " ++ show x ++ " and " ++ show y
+tell' (x:y:_) = "This list is long. The first two elements are: " ++ show x ++ " and " ++ show y
 
 length' :: (Num b) => [a] -> b
 length' [] = 0
@@ -244,6 +246,12 @@ lockerLookup lockerNumber m =
 
 data Tree a = Empty | Node a (Tree a) (Tree a) deriving (Show, Read, Eq)
 
+instance F.Foldable Tree where
+    foldMap f Empty = mempty
+    foldMap f (Node x l r) = F.foldMap f l `mappend`
+                             f x           `mappend`
+                             F.foldMap f r
+
 singleton :: a -> Tree a
 singleton x = Node x Empty Empty
 treeInsert :: (Ord a) => a -> Tree a -> Tree a
@@ -369,13 +377,11 @@ newtype Prob a = Prob [(a, Rational)] deriving Show
 instance Functor Prob where
     fmap f (Prob xs) = Prob $ map (first f) xs
 
-flatten :: Prob (Prob a) -> Prob a  
-flatten (Prob xs) = Prob $ concatMap multAll xs
-    where multAll (Prob innerxs,p) = map (second (p * )) innerxs
-
 instance Monad Prob where
     return x = Prob [(x, 1%1)]
-    m >>=f = flatten (fmap f m)
+    m >>=f = flatten (fmap f m) where
+      flatten (Prob xs) = Prob $ concatMap multAll xs
+        where multAll (Prob innerxs,p) = map (second (p * )) innerxs
     fail _ = Prob []
 
 data Coin = Heads | Tails deriving (Show, Eq)
@@ -386,10 +392,10 @@ coin = Prob [(Heads, 1%2), (Tails, 1%2)]
 loadedCoin :: Prob Coin
 loadedCoin = Prob [(Heads, 1%10), (Tails, 9%10)]
 
-thisSituation :: Prob (Prob Char)  
-thisSituation = Prob  
-    [( Prob [('a',1%2),('b',1%2)] , 1%4 )  
-    ,( Prob [('c',1%2),('d',1%2)] , 3%4)  
+thisSituation :: Prob (Prob Char)
+thisSituation = Prob
+    [( Prob [('a',1%2),('b',1%2)] , 1%4 )
+    ,( Prob [('c',1%2),('d',1%2)] , 3%4)
     ]
 
 flipThree :: Prob Bool
@@ -550,3 +556,30 @@ prevPalindrome num
   | numIsPalindrome(prevNumber) = prevNumber
   | otherwise = prevPalindrome(prevNumber)
   where prevNumber = num - 1
+
+sequenceA :: (Applicative f) => [f a] -> f [a]
+sequenceA = foldr (liftA2 (:)) (pure [])
+
+keepSmall :: Int -> Writer [String] Bool
+keepSmall x
+    | x < 4 = do
+        tell ["Keeping " ++ show x]
+        return True
+    | otherwise = do
+        tell [show x ++ " is too large, throwing it away"]
+        return False
+
+readMaybe :: (Read a) => String -> Maybe a
+readMaybe st = case reads st
+                    of [(x, "")] -> Just x
+                       _ -> Nothing
+
+solveRPN' :: String -> Maybe Double
+solveRPN' st = do
+  [result] <- foldM foldingFunction [] (words st)
+  return result
+    where
+          foldingFunction (x:y:ys) "*" = return ((x * y):ys)
+          foldingFunction (x:y:ys) "+" = return ((x + y):ys)
+          foldingFunction (x:y:ys) "-" = return ((y - x):ys)
+          foldingFunction xs numberString = liftM (:xs) (readMaybe numberString)
