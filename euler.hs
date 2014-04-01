@@ -110,7 +110,7 @@ consecutives xs n = (take n xs) : case xs of
 maxProduct :: [Char] -> Int -> Int
 maxProduct s c = maximum $ map charProduct cConsecutives
   where charProduct xs = product $ map chrToInt xs
-        cConsecutives = filter ((==5).length) $ consecutives s c
+        cConsecutives = filter ((==c).length) $ consecutives s c
 
 numberString :: String
 numberString ="\
