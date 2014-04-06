@@ -13,6 +13,7 @@ import Control.Monad.Error()
 import Control.Monad.Trans.State
 import Control.Monad.Writer
 
+
 doubleMe :: Num a => a -> a
 doubleMe x = x * 2
 doubleUs :: (Num a) => a -> a -> a
@@ -467,11 +468,11 @@ data Crumb a = LeftCrumb a (Tree a) | RightCrumb a (Tree a) deriving (Show)
 -------------------------
 
 maybeAnd :: Bool -> Bool -> Maybe Bool
-maybeAnd True True = Just True 
+maybeAnd True True = Just True
 maybeAnd _ _ = Nothing
 
 maybeAndFold :: [Bool] -> Maybe Bool
-maybeAndFold boolList = foldM maybeAnd True boolList
+maybeAndFold = foldM maybeAnd True
 -------------------------
 
 newtype ZipList' a = ZipList' [a] deriving Show
@@ -503,7 +504,7 @@ moveKnight (c, r) = do
   return (c', r')
 
 inThree :: KnightPos -> [KnightPos]
-inThree start = return start >>= moveKnight >>= moveKnight >>= moveKnight
+inThree start =  moveKnight start >>= moveKnight >>= moveKnight
 
 canReachInThree :: KnightPos -> KnightPos -> Bool
 canReachInThree start end = end `elem` inThree start
@@ -523,7 +524,7 @@ stackManip = do
   pop
 
 powerset :: [a] -> [[a]]
-powerset = filterM (\_ -> [True, False])
+powerset = filterM (const [True, False])
 
 randomSt :: (RandomGen g, Random a) => State g a
 randomSt = state random
@@ -537,24 +538,24 @@ deQ :: State (Queue a) a
 deQ = state $ \(Queue (x:xs)) -> (x, Queue xs)
 
 slice :: Int -> Int -> [a] -> [a]
-slice start end = (drop start).(take end)
+slice start end = drop start . take end
 
 isPalindrome :: Eq a => [a] -> Bool
 isPalindrome [] = True
 isPalindrome (_:[]) = True
 isPalindrome (x:xs)
-  | sameEnds = isPalindrome(subArray)
+  | sameEnds = isPalindrome subArray
   | otherwise = False
-  where subArray = take (length xs - 1) $ xs
-        sameEnds = x == last(xs)
+  where subArray = take (length xs - 1) xs
+        sameEnds = x == last xs
 
 numIsPalindrome :: Integer -> Bool
 numIsPalindrome = isPalindrome.show.abs
 
 prevPalindrome :: Integer -> Integer
 prevPalindrome num
-  | numIsPalindrome(prevNumber) = prevNumber
-  | otherwise = prevPalindrome(prevNumber)
+  | numIsPalindrome prevNumber = prevNumber
+  | otherwise = prevPalindrome prevNumber
   where prevNumber = num - 1
 
 sequenceA :: (Applicative f) => [f a] -> f [a]
