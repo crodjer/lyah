@@ -1,18 +1,17 @@
 module Baby where
 
-import Data.Monoid
-import Data.Ratio
-import qualified Data.Map as Map
-import qualified Data.Foldable as F
-import System.Random
-import Control.Arrow (first, second)
-import GHC.Float()
-import Control.Monad
 import Control.Applicative
-import Control.Monad.Error()
+import Control.Arrow (first, second)
+import Control.Monad
+import Control.Monad.Trans.Error()
 import Control.Monad.Trans.State
-import Control.Monad.Writer
-
+import Control.Monad.Trans.Writer
+import qualified Data.Foldable as F
+import qualified Data.Map as Map
+import Data.Ratio
+import Data.Monoid
+import GHC.Float()
+import System.Random
 
 doubleMe :: Num a => a -> a
 doubleMe x = x * 2
@@ -27,7 +26,6 @@ doubleSmallNumber x = if x > 100
 doubleSmallNumber' :: Int -> Int
 doubleSmallNumber' x = (if x > 100 then x else x*2) + 1
 
-
 boomBangs :: [Int] -> [String]
 boomBangs xs = [ if x < 10 then "BOOM!" else "BANG!" | x <- xs, odd x ]
 
@@ -35,7 +33,7 @@ lucky :: Int -> String
 lucky 7 = "Lucky No. Seven!"
 lucky _ = "Sorry, you're out of luck, pal!"
 
--- factorial :: Int -> Int
+factorial :: Int -> Int
 factorial 0 = 1
 factorial n = n * factorial(n-1)
 
@@ -232,9 +230,9 @@ lockerLookup :: Int -> LockerMap -> Either String Code
 lockerLookup lockerNumber m =
     case Map.lookup lockerNumber m of
         Nothing -> Left $ "Locker number " ++ show lockerNumber ++ " does't exist!"
-        Just (state, code) -> if state /= Taken
-                                then Right code
-                                else Left $ "Locker number " ++ show lockerNumber ++ " is already taken!"
+        Just (_state, code) -> if _state /= Taken
+                               then Right code
+                               else Left $ "Locker number " ++ show lockerNumber ++ " is already taken!"
 
 -- data List a = Empty | Cons {listHEAD :: a, listTail :: List a} deriving (Show, Read, Eq, Ord)
 -- infixr 5 :-:
@@ -248,7 +246,7 @@ lockerLookup lockerNumber m =
 data Tree a = Empty | Node a (Tree a) (Tree a) deriving (Show, Read, Eq)
 
 instance F.Foldable Tree where
-    foldMap f Empty = mempty
+    foldMap _ Empty = mempty
     foldMap f (Node x l r) = F.foldMap f l `mappend`
                              f x           `mappend`
                              F.foldMap f r
@@ -411,7 +409,7 @@ freeTree =
     Node 'P'
         (Node 'O'
             (Node 'L'
-                (Node 'N' Empty Empty)
+             (Node 'N' Empty Empty)
                 (Node 'T' Empty Empty)
             )
             (Node 'W'
@@ -520,7 +518,7 @@ push a = state $ \xs -> ((),a:xs)
 stackManip :: State Stack Int
 stackManip = do
   push 3
-  pop
+  _ <-pop
   pop
 
 powerset :: [a] -> [[a]]
@@ -554,8 +552,8 @@ numIsPalindrome = isPalindrome.show.abs
 
 prevPalindrome :: Integer -> Integer
 prevPalindrome num
-  | numIsPalindrome prevNumber = prevNumber
-  | otherwise = prevPalindrome prevNumber
+  | numIsPalindrome(prevNumber) = prevNumber
+  | otherwise = prevPalindrome(prevNumber)
   where prevNumber = num - 1
 
 sequenceA :: (Applicative f) => [f a] -> f [a]

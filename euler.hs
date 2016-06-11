@@ -1,20 +1,28 @@
 module Euler where
 
-import Control.Applicative
-
 -- Problem 1
+hasFactor :: Integral a => a -> a -> Bool
 hasFactor num factor = num `mod` factor == 0
+
+filterMultiples :: Integral a => a -> [a] -> [a]
 filterMultiples factor = filter (flip hasFactor factor)
+
+filter3xs :: [Integer] -> [Integer]
 filter3xs = filterMultiples 3
+
+filter5xs :: [Integer] -> [Integer]
 filter5xs = filterMultiples 5
 -- ^ Oops, not really needed
 
 anyIsFactor :: [Integer] -> Integer -> Bool
 anyIsFactor = flip (any.hasFactor)
 
+filterMultiMultiples :: [Integer] -> [Integer] -> [Integer]
 filterMultiMultiples factors = filter (anyIsFactor factors)
+filter3or5xs :: [Integer] -> [Integer]
 filter3or5xs = filterMultiMultiples ([3, 5] :: [Integer])
 
+sum3or5xsUnder1000 :: Integer
 sum3or5xsUnder1000 = sum(filter3or5xs [1..999]) -- 233168
 -- Project Euler's solution:
 -- http://projecteuler.net/project/resources/001_c619a145e9d327a5c4c84649bec9981b/001_overview.pdf
@@ -40,10 +48,11 @@ primes = 2 : filter ((==1) . length . primeFactors) [3,5..]
 primeFactors :: Integer -> [Integer]
 primeFactors n = factor n primes
   where
-    factor n (p:ps)
-        | p*p > n        = [n]
-        | n `mod` p == 0 = p : factor (n `div` p) (p:ps)
-        | otherwise      = factor n ps
+    factor _n (p:ps)
+        | p*p > n          = [_n]
+        | _n `mod` p == 0  = p : factor (_n `div` p) (p:ps)
+        | otherwise        = factor _n ps
+    factor _ []            = [1]
 
 problem3 :: Integer
 problem3 = last $ primeFactors 600851475143
@@ -135,4 +144,5 @@ numberString ="\
 \05886116467109405077541002256983155200055935729725\
 \71636269561882670428252483600823257530420752963450"
 
+problem8 :: Int
 problem8 = maxProduct numberString 5
